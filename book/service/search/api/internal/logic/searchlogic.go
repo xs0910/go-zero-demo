@@ -2,6 +2,9 @@ package logic
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"go-zero-demo/book/service/user/rpc/user"
 
 	"go-zero-demo/book/service/search/api/internal/svc"
 	"go-zero-demo/book/service/search/api/internal/types"
@@ -24,10 +27,23 @@ func NewSearchLogic(ctx context.Context, svcCtx *svc.ServiceContext) *SearchLogi
 }
 
 func (l *SearchLogic) Search(req *types.SearchReq) (*types.SearchReply, error) {
-	logx.Infof("userId: %v", l.ctx.Value("userId"))
+	userIdNumber := json.Number(fmt.Sprintf("%v", l.ctx.Value("userId")))
+	logx.Infof("userId: %s", userIdNumber)
+	userId, err := userIdNumber.Int64()
+	if err != nil {
+		return nil, err
+	}
+
+	// 使用user rpc
+	userInfo, err := l.svcCtx.UserRpc.GetUser(l.ctx, &user.IdReq{
+		Id: userId,
+	})
+	if err != nil {
+		return nil, err
+	}
 
 	return &types.SearchReply{
-		Name:  "",
-		Count: 0,
+		Name:  userInfo.Name,
+		Count: 100,
 	}, nil
 }
